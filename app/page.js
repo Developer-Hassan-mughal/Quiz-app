@@ -1,95 +1,148 @@
-import Image from 'next/image'
-import styles from './page.module.css'
+"use client"
+import { asyncAddQuiz} from '@/store/actions/quizActions';
+import { useDispatch, useSelector } from 'react-redux';
+import React from 'react'
+import axios from "axios";
+import { useEffect, useState } from "react";
+import Quiz from '@/components/Quiz/Quiz';
+import Nav from '@/components/Nav/Nav';
 
-export default function Home() {
+const page = () => {
+
+
+  const [amount, setamount] = useState("");
+  const [difficulty, setDifficulty] = useState("");
+  const [category, setCategory] = useState("");
+  const [type, settype] = useState("")
+  const [allcategories, setAllcategories] = useState([]);
+  const [allStates, setallStates] = useState([])
+
+  const [from, setfrom] = useState(0)
+  const [limit, setlimit] = useState(1)
+  const [color, setcolor] = useState(null)
+  const [red, setred] = useState(null)
+
+  const [attempt, setattempt] = useState(0)
+  const [correct, setcorrect] = useState(0)
+  const [percent, setpercent] = useState(0)
+
+  const dispatch = useDispatch()
+
+  
+  useEffect(() => {
+    dispatch(asyncAddQuiz(allStates));
+}, [allStates]);
+
+
+  const getCategories = async () => {
+      try {
+          const { data } = await axios.get(
+              "https://opentdb.com/api_category.php"
+          );
+          setAllcategories(data.trivia_categories);
+      } catch (error) {
+          console.log(error);
+      }
+  };
+
+  const CallApiHandler = (e) => {
+      e.preventDefault();
+      const query = {
+          amount,
+          category,
+          difficulty,
+          type
+      };
+      setallStates(query)
+      setfrom(0)
+      setlimit(1)
+      setcorrect(0)
+
+      setTimeout(() => {        
+        window.scrollTo({ top: 1000, behavior: 'smooth' });
+      }, 1500);
+  };
+
+  useEffect(() => {
+      getCategories();
+  }, []);
+
+
   return (
-    <main className={styles.main}>
-      <div className={styles.description}>
-        <p>
-          Get started by editing&nbsp;
-          <code className={styles.code}>app/page.js</code>
-        </p>
-        <div>
-          <a
-            href="https://vercel.com?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            By{' '}
-            <Image
-              src="/vercel.svg"
-              alt="Vercel Logo"
-              className={styles.vercelLogo}
-              width={100}
-              height={24}
-              priority
-            />
-          </a>
-        </div>
-      </div>
+    <div>
+      <Nav
+        attempt = {attempt}
+        correct = {correct}
+        percent = {percent}
+      />
 
-      <div className={styles.center}>
-        <Image
-          className={styles.logo}
-          src="/next.svg"
-          alt="Next.js Logo"
-          width={180}
-          height={37}
-          priority
-        />
-      </div>
 
-      <div className={styles.grid}>
-        <a
-          href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Docs <span>-&gt;</span>
-          </h2>
-          <p>Find in-depth information about Next.js features and API.</p>
-        </a>
 
-        <a
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Learn <span>-&gt;</span>
-          </h2>
-          <p>Learn about Next.js in an interactive course with&nbsp;quizzes!</p>
-        </a>
+        <div className="container">
+        <h1>Create Quizzyy</h1>
+        <form onSubmit={CallApiHandler}>
+            <label>Amount of Questions:</label>
+            <input type="number" id="amount" min="1" required value={amount}
+                    onChange={(e) => setamount(e.target.value)}/>
 
-        <a
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Templates <span>-&gt;</span>
-          </h2>
-          <p>Explore the Next.js 13 playground.</p>
-        </a>
+                    <hr/>
 
-        <a
-          href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Deploy <span>-&gt;</span>
-          </h2>
-          <p>
-            Instantly deploy your Next.js site to a shareable URL with Vercel.
-          </p>
-        </a>
-      </div>
-    </main>
+            <label>Difficulty:</label>
+            <select id="difficulty"
+              onChange={(e) => setDifficulty(e.target.value)}>
+                <option value="">Any Difficulty</option>
+                <option value="easy">Easy</option>
+                <option value="medium">Medium</option>
+                <option value="hard">Hard</option>
+            </select>
+
+            <hr />
+
+            <label>Category:</label>
+            <select id="category" name="category"
+            onChange={(e) => setCategory(e.target.value)}
+            >
+                    <option value="">Any Category</option>
+                    {allcategories.map((c) => (
+                        <option key={c.id} value={c.id}>
+                            {c.name}
+                        </option>
+                    ))} 
+            </select>
+
+            <hr />
+
+            <label>Question Type:</label>
+            <select id="type" 
+            onChange={(e) => settype(e.target.value)}
+            >
+                <option value="">Any type</option>
+                <option value="multiple">Multiple Choice</option>
+                <option value="boolean">True / False</option>
+            </select>
+
+            <button id="submit-btn">Start Quiz</button>
+        </form>
+    </div>
+
+    <Quiz
+      from = {from}
+      setfrom = {setfrom}
+      limit = {limit}
+      setlimit = {setlimit}
+      color = {color}
+      setcolor = {setcolor}
+      red = {red}
+      setred = {setred}
+      setattempt = {setattempt}
+      setcorrect = {setcorrect}
+      setpercent = {setpercent}
+      correctt = {correct}
+      attempt = {attempt}
+    />
+
+    </div>
   )
 }
+
+export default page
